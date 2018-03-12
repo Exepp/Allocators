@@ -10,13 +10,14 @@ public:
 
 	Pool() = default;
 
+	Pool(Pool&& rhs);
+
+	Pool& operator=(Pool && rhs);
+
 	Pool(const Pool & lref) = delete;
 
 	Pool& operator=(const Pool & right) = delete;
 
-	Pool(Pool&& rref);
-
-	Pool& operator=(Pool && right);
 
 	~Pool();
 

@@ -6,17 +6,20 @@ class StackAllocator
 	using Marker = uintptr_t;
 
 public:
-	explicit StackAllocator(size_t sizeInBytes);
 
 	StackAllocator() = default;
 
-	StackAllocator(const StackAllocator & lref) = delete;
-
-	StackAllocator& operator=(const StackAllocator & lref) = delete;
+	explicit StackAllocator(size_t sizeInBytes);
 
 	StackAllocator(StackAllocator&& rref);
 
 	StackAllocator& operator=(StackAllocator&& rref);
+
+
+	StackAllocator(const StackAllocator&) = delete;
+
+	StackAllocator& operator=(const StackAllocator&) = delete;
+
 
 	~StackAllocator();
 
