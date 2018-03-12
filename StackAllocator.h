@@ -3,21 +3,28 @@
 
 class StackAllocator
 {
-	typedef uintptr_t Marker;
+	using Marker = uintptr_t;
 
 public:
 	explicit StackAllocator(size_t sizeInBytes);
+
 	StackAllocator() = default;
+
 	StackAllocator(const StackAllocator & lref) = delete;
-	StackAllocator(StackAllocator&& rref) = delete;
+
 	StackAllocator& operator=(const StackAllocator & lref) = delete;
-	StackAllocator& operator=(StackAllocator&& lref) = delete;
+
+	StackAllocator(StackAllocator&& rref);
+
+	StackAllocator& operator=(StackAllocator&& rref);
 
 	~StackAllocator();
 
 	void init(size_t sizeInBytes);
 
+
 	void* allocRawUnaligned(size_t sizeInBytes);
+	
 	//  "alignment" must be a power of 2
 	void* allocRawAligned(size_t sizeInBytes, uint8_t alignment);
 
@@ -26,12 +33,11 @@ public:
 	template<class T, class ...Args>
 	T* allocObject(Args... args);
 
-	Marker getMarker() const;
 
-	template<class T>
-	void freeToRawUnaligned(T* marker);
-	template<class T>
-	void freeToRawAligned(T* marker);
+
+	void freeToRawUnaligned(void* marker);
+
+	void freeToRawAligned(void* marker);
 
 	// sets stack top to marker and calls destructor on given object
 	template<class T>
@@ -43,13 +49,25 @@ public:
 	// resets stack size to 0, deletes allocated memory
 	void reset();
 
-	bool isValid(void* ptr) const;
+	bool contains(void* ptr) const;
+
+
+	Marker getMarker() const;
+
+	size_t getSize() const;
+
+	size_t getFreeSize() const;
+
 
 private:
+
 	Marker topMarker = 0;
+
 	Marker bottomMarker = 0;
+
 	size_t sizeInBytes = 0;
 };
+
 
 template<class T, class ...Args>
 inline T * StackAllocator::allocObject(Args ...args)
@@ -62,35 +80,9 @@ inline T * StackAllocator::allocObject(Args ...args)
 }
 
 template<class T>
-inline void StackAllocator::freeToRawUnaligned(T * marker)
-{
-	ASSERT(marker, "Tried to free memory to a nullptr");
-	if (marker)
-	{
-		uintptr_t mark = (uintptr_t)marker;
-		ASSERT((mark < topMarker), "Tried to free memory to a marker that lies further than current stack's top marker");
-
-		if (mark < topMarker)
-			topMarker = mark;
-	}
-}
-
-template<class T>
-inline void StackAllocator::freeToRawAligned(T * marker)
-{
-	ASSERT(marker, "Tried to free memory to a nullptr");
-	if (marker)
-	{
-		uintptr_t mark = (uintptr_t)marker;
-		uint8_t adjustment = *((uint8_t*)(mark - 1));
-		freeToRawUnaligned((T*)(mark - adjustment));
-	}
-}
-
-template<class T>
 inline void StackAllocator::freeToObject(T * marker)
 {
-	if (marker)
+	if (marker && contains(marker))
 	{
 		marker->~T();
 		freeToRawAligned(marker);

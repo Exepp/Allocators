@@ -7,11 +7,16 @@ class Pool
 {
 public:
 	explicit Pool(size_t size, size_t typeSize, uint8_t alignment);
+
 	Pool() = default;
+
 	Pool(const Pool & lref) = delete;
-	Pool(Pool&& rref) = delete;
+
 	Pool& operator=(const Pool & right) = delete;
-	Pool& operator=(Pool && right) = delete;
+
+	Pool(Pool&& rref);
+
+	Pool& operator=(Pool && right);
 
 	~Pool();
 
@@ -41,17 +46,24 @@ public:
 	// sets all memory as free
 	void clear();
 
+
 	size_t freeCount() const;
+
 	size_t size() const;
 
 
 	bool contains(void* ptr) const;
 
 private:
-	size_t		poolSize = 0;
+
+	size_t		elemNum = 0;
+
 	size_t		typeSize = 0;
+
 	size_t		inUseCount = 0;
+
 	uintptr_t	freeIndex = std::numeric_limits<uintptr_t>::max();
+
 	uintptr_t	memory = 0;
 
 	StackAllocator allocator;
@@ -69,7 +81,7 @@ inline T * Pool::allocObject(Args&&... args)
 	}
 	return nullptr;
 }
-#include <typeindex>
+
 template<class T>
 inline void Pool::freeObject(T * object)
 {
